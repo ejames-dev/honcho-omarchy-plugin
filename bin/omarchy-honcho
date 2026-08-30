@@ -11,10 +11,13 @@ set -uo pipefail
 
 url="${OMARCHY_HONCHO_URL:-http://localhost:8000}"
 
+# Captured via command substitution (which strips any trailing newline the
+# server did or didn't send) so the printf below always emits exactly one
+# newline between the JSON and the URL line, regardless of the response.
 if command -v curl >/dev/null 2>&1; then
-  curl -fsS --max-time 2 "$url/health" 2>/dev/null || echo '{"status":"unreachable"}'
+  body="$(curl -fsS --max-time 2 "$url/health" 2>/dev/null)" || body='{"status":"unreachable"}'
 else
-  echo '{"status":"unreachable"}'
+  body='{"status":"unreachable"}'
 fi
 
-echo "$url"
+printf '%s\n%s\n' "$body" "$url"
