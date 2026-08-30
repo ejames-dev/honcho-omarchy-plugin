@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Reports whether a local Honcho instance is reachable. Read-only: makes one
+# loopback-only GET request and never writes anything.
+#
+# Usage: omarchy-honcho status
+#   Prints two lines:
+#     1. Raw JSON from Honcho's GET /health (or {"status":"unreachable"} if
+#        the request fails within the timeout).
+#     2. The base URL that was queried, so the panel can display it.
+set -uo pipefail
+
+url="${OMARCHY_HONCHO_URL:-http://localhost:8000}"
+
+if command -v curl >/dev/null 2>&1; then
+  curl -fsS --max-time 2 "$url/health" 2>/dev/null || echo '{"status":"unreachable"}'
+else
+  echo '{"status":"unreachable"}'
+fi
+
+echo "$url"

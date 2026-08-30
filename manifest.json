@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.ejames-dev.honcho",
+  "name": "Honcho",
+  "version": "0.1.0",
+  "author": "ejames-dev",
+  "license": "MIT",
+  "description": "Shows whether your local Honcho instance (the self-hosted memory server for AI agents, honcho.dev) is reachable. Polls its /health endpoint on a timer; click the bar pill for connection details.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Honcho",
+    "description": "Shows whether your local Honcho instance (the self-hosted memory server for AI agents, honcho.dev) is reachable. Polls its /health endpoint on a timer; click the bar pill for connection details.",
+    "category": "Developer Tools",
+    "aliases": [
+      "honcho"
+    ],
+    "allowMultiple": false
+  }
+}
