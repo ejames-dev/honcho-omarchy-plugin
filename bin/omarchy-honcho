@@ -15,7 +15,10 @@ url="${OMARCHY_HONCHO_URL:-http://localhost:8000}"
 # server did or didn't send) so the printf below always emits exactly one
 # newline between the JSON and the URL line, regardless of the response.
 if command -v curl >/dev/null 2>&1; then
-  body="$(curl -fsS --max-time 2 "$url/health" 2>/dev/null)" || body='{"status":"unreachable"}'
+  # --max-filesize bounds curl's own transfer; head -c puts a second, hard
+  # ceiling on the bytes that ever reach this shell, regardless of what a
+  # remote OMARCHY_HONCHO_URL declares or how it behaves.
+  body="$(curl -fsS --max-time 2 --max-filesize 65536 "$url/health" 2>/dev/null | head -c 65536)" || body='{"status":"unreachable"}'
 else
   body='{"status":"unreachable"}'
 fi
