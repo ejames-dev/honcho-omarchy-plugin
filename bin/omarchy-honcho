@@ -9,18 +9,35 @@
 #     2. The base URL that was queried, so the panel can display it.
 set -uo pipefail
 
-url="${OMARCHY_HONCHO_URL:-http://localhost:8000}"
+default_url="http://localhost:8000"
+raw_url="${OMARCHY_HONCHO_URL:-$default_url}"
+
+# OMARCHY_HONCHO_URL is attacker-influenceable environment input (shell
+# profile, systemd user env unit, etc). Bound its length before matching so
+# a pathological value can't make the regex do unbounded work, then require
+# an explicit http(s)://host[:port] with no path, query, userinfo, or
+# option-like leading characters. Anything else falls back to the loopback
+# default instead of ever reaching curl.
+if [ "${#raw_url}" -le 256 ] && [[ "$raw_url" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$ ]]; then
+  url="$raw_url"
+else
+  url="$default_url"
+fi
 
 # Captured via command substitution (which strips any trailing newline the
 # server did or didn't send) so the printf below always emits exactly one
 # newline between the JSON and the URL line, regardless of the response.
 if command -v curl >/dev/null 2>&1; then
   # --max-filesize bounds curl's own transfer; head -c puts a second, hard
-  # ceiling on the bytes that ever reach this shell, regardless of what a
-  # remote OMARCHY_HONCHO_URL declares or how it behaves.
-  body="$(curl -fsS --max-time 2 --max-filesize 65536 "$url/health" 2>/dev/null | head -c 65536)" || body='{"status":"unreachable"}'
+  # ceiling on the bytes that ever reach this shell, regardless of what the
+  # server sends. `--` stops curl from ever reading "$url/health" as options
+  # (belt-and-suspenders: the regex above already forbids a leading '-' and
+  # non-http(s) schemes).
+  body="$(curl -fsS --max-time 2 --max-filesize 65536 -- "$url/health" 2>/dev/null | head -c 65536)" || body='{"status":"unreachable"}'
 else
   body='{"status":"unreachable"}'
 fi
 
-printf '%s\n%s\n' "$body" "$url"
+# Final hard ceiling on total stdout (body + URL line), independent of the
+# bounds above, so nothing unbounded ever reaches the QML StdioCollector.
+printf '%s\n%s\n' "$body" "$url" | head -c 66048

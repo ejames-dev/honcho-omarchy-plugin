@@ -44,4 +44,12 @@ omarchy plugin remove io.github.ejames-dev.honcho
 - The default URL is loopback-only (`localhost`). If you override it to a
   non-loopback host, that request goes wherever you point it — only do
   this if you trust that endpoint.
+- `OMARCHY_HONCHO_URL` must be an explicit `http://host[:port]` or
+  `https://host[:port]` — no path, query string, credentials, or other
+  scheme. A value that doesn't match this shape (or is implausibly long)
+  is ignored in favor of the `http://localhost:8000` default rather than
+  ever being handed to `curl`.
 - No external dependencies beyond `curl`, which ships with Omarchy.
+- Requires a Honcho server you run and manage yourself — there's no
+  bundled or auto-installed service, so this plugin needs manual setup
+  before the pill will ever show "Connected".
