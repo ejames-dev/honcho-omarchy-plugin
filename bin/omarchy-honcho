@@ -28,12 +28,15 @@ fi
 # server did or didn't send) so the printf below always emits exactly one
 # newline between the JSON and the URL line, regardless of the response.
 if command -v curl >/dev/null 2>&1; then
-  # --max-filesize bounds curl's own transfer; head -c puts a second, hard
-  # ceiling on the bytes that ever reach this shell, regardless of what the
-  # server sends. `--` stops curl from ever reading "$url/health" as options
-  # (belt-and-suspenders: the regex above already forbids a leading '-' and
-  # non-http(s) schemes).
-  body="$(curl -fsS --max-time 2 --max-filesize 65536 -- "$url/health" 2>/dev/null | head -c 65536)" || body='{"status":"unreachable"}'
+  # -q/--disable must be curl's first option: it skips ~/.curlrc, which
+  # could otherwise silently add redirects, a proxy, an upload, an output
+  # file, extra headers, or a different URL and undermine every guarantee
+  # below. --max-filesize bounds curl's own transfer; head -c puts a
+  # second, hard ceiling on the bytes that ever reach this shell,
+  # regardless of what the server sends. `--` stops curl from ever reading
+  # "$url/health" as options (belt-and-suspenders: the regex above already
+  # forbids a leading '-' and non-http(s) schemes).
+  body="$(curl -q -fsS --max-time 2 --max-filesize 65536 -- "$url/health" 2>/dev/null | head -c 65536)" || body='{"status":"unreachable"}'
 else
   body='{"status":"unreachable"}'
 fi
